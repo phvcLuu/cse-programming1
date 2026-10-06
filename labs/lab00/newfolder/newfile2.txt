@@ -1,0 +1,7 @@
+copy by: cp newfile.txt /newfolder/newfile2.txt
+
+Scheisse 
+editing file using nano in terminal
+  ^   ^
+ ( o  o )
+editing/appending file using echo
