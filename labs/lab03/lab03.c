@@ -125,30 +125,99 @@ char *my_strdup(const char *s) {
 //     If full (*size == *capacity): double the capacity using realloc
 //     (if *capacity == 0, allocate 1 element).
 //     Return a pointer to the array (it may have changed after realloc).
+
+/* // OLD VER
 int *push_back(int *arr, int *size, int *capacity, int value) {
-    // TODO
-    (void)size; (void)capacity; (void)value;
+    if (*capacity == 0){
+        *capacity = 1;
+        int *tmp = malloc(sizeof(*arr));
+        if (tmp == NULL){
+            printf("Out of memory!!!");
+            return NULL;
+        }
+        arr = tmp;
+    } else if (*capacity == *size){
+        *capacity *= 2;
+        int *tmp = realloc(arr, *capacity * sizeof(*arr));
+        if (tmp == NULL){ 
+            printf("Out of memory!!!");
+            return NULL;
+        }
+        arr = tmp; 
+    }
+
+    arr[*size] = value;
+    (*size)++;
+    return arr;
+}*/
+
+int *push_back(int *arr, int *size, int *capacity, int value) {
+    if (size == NULL || capacity == NULL) return NULL;
+
+    if (*size == *capacity){
+        int new_capacity = (*capacity == 0) ? 1 : (*capacity *= 2);
+        int *tmp = realloc(arr, new_capacity * sizeof(*arr));
+        if (tmp == NULL){
+            printf("Out of memory!!!");
+            return NULL;
+        }
+        arr = tmp;
+        *capacity = new_capacity;
+    }
+
+    arr[*size] = value;
+    (*size)++;
     return arr;
 }
 
 // 3.8 Allocate a rows x cols matrix as int ** (Lecture 7), initialized to all 0
 int **alloc_matrix(int rows, int cols) {
-    // TODO: 1 malloc for the array of row pointers + rows calls to calloc, one per row
-    (void)rows; (void)cols;
-    return NULL;
+    int **a = malloc(rows * sizeof(*a));
+    if (a == NULL){
+        printf("Out of memory!!!");
+        return NULL;
+    }
+
+    for (int i = 0; i < rows; ++i){
+        a[i] = malloc(cols * sizeof(*a[i])); // or use calloc()
+        // a[i] = calloc(cols, sizeof(**a));
+        if (a[i] == NULL){
+            // free prev mem if they success
+            for (int k = 0; k < i; ++k){
+                free(a[k]);
+            }
+            free(a);
+            return NULL;
+        }
+    }
+
+    // remove if use calloc()
+    for(int i = 0; i < rows; ++i){
+        for (int j = 0; j < cols; ++j){
+            *(*(a + i) + j) = 0;
+        }
+    }
+
+    return a;
 }
 
 // 3.8 Free the matrix: each row first, then the array of pointers
 void free_matrix(int **m, int rows) {
-    // TODO
-    (void)m; (void)rows;
+    if (m == NULL) return;
+    for (int i = 0; i < rows; i++){
+        free(m[i]);
+    }
+    free(m);
 }
 
 // 3.9 Allocate an int on the heap, set it to value, and "return" it through parameter p
 //     (fixes the bug in out-of-scope-allocation_1.c)
 void allocate_int(int **p, int value) {
-    // TODO
-    (void)p; (void)value;
+    *p = malloc(sizeof(int));
+    if (*p == NULL){
+        printf("Out of memory!!!");
+    }
+    **p = value;
 }
 
 int main() {
@@ -185,35 +254,36 @@ int main() {
     CHECK(dup != NULL && dup != orig && strcmp(dup, orig) == 0);
     free(dup);
 
-    // printf("3.7 push_back\n");
-    // int *arr = NULL, size = 0, capacity = 0;
-    // for (int i = 1; i <= 10; i++)
-    //     arr = push_back(arr, &size, &capacity, i * 10);
-    // int e7[] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-    // CHECK(size == 10);
-    // CHECK(capacity == 16);
-    // CHECK(same_array(arr, e7, 10));
-    // free(arr);
+    printf("3.7 push_back\n");
+    int *arr = NULL, size = 0, capacity = 0;
+    for (int i = 1; i <= 10; i++)
+        arr = push_back(arr, &size, &capacity, i * 10);
+    int e7[] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+    CHECK(size == 10);
+    CHECK(capacity == 16);
+    CHECK(same_array(arr, e7, 10));
+    free(arr);
+ 
+    printf("3.8 alloc_matrix\n");
+    int **m = alloc_matrix(3, 4);
+    int ok = m != NULL; // Defensive Programming
+    for (int i = 0; ok && i < 3; i++) // Short-circuit Evaluation
+        for (int j = 0; j < 4; j++)
+            ok = ok && m[i][j] == 0; // Boolean Accumulator
+    CHECK(ok);
+    if (m != NULL) {
+        m[2][3] = 42;
+        CHECK(m[2][3] == 42);
+        free_matrix(m, 3);
+    }
 
-    // printf("3.8 alloc_matrix\n");
-    // int **m = alloc_matrix(3, 4);
-    // int ok = m != NULL;
-    // for (int i = 0; ok && i < 3; i++)
-    //     for (int j = 0; j < 4; j++)
-    //         ok = ok && m[i][j] == 0;
-    // CHECK(ok);
-    // if (m != NULL) {
-    //     m[2][3] = 42;
-    //     CHECK(m[2][3] == 42);
-    //     free_matrix(m, 3);
-    // }
-
-    // printf("3.9 allocate_int\n");
-    // int *p = NULL;
-    // allocate_int(&p, 42);
-    // CHECK(p != NULL && *p == 42);
-    // free(p);
+    printf("3.9 allocate_int\n");
+    int *p = NULL;
+    allocate_int(&p, 42);
+    CHECK(p != NULL && *p == 42);
+    free(p);
 
     printf("\nResult: %d/%d PASS\n", passed, total);
     return passed == total ? 0 : 1;
+    
 }
