@@ -88,6 +88,13 @@ int *filter_even(const int *a, int n, int *returnSize) {
             *returnSize += 1;
         }
     }
+    // trim unncessary memory before return
+    if (*returnSize < n) {
+        int *trimmed = realloc(evenArr, (*returnSize > 0 ? *returnSize : 1) * sizeof(*evenArr));
+        if (trimmed != NULL) {
+            evenArr = trimmed;
+        }
+    }
     return evenArr;
 }
 
